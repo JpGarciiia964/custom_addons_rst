@@ -1,0 +1,17 @@
+// Copyright 2019 Adgensee - Vincent Garcies.
+// License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
+
+body.editor_enable.editor_has_snippets .s_html {
+    border: 1px solid #64bda4;
+    min-height: 40px;
+    width: 100%;
+    background-image: url("/website_snippet_html/static/src/img/s_html.png");
+    background-repeat: no-repeat;
+    background-size: 30px;
+    background-position: 100% 100%;
+}
+
+
+textarea.form-control {
+    min-height: 400px;
+}

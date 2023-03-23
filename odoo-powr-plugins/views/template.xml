@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="assets_editor_form_builder"
+              inherit_id="website.assets_editor">
+        <xpath expr="." position="inside">
+            <script src="https://www.powr.io/powr.js?platform=odoo-integrated"/>
+        </xpath>
+    </template>
+
+
+    <template id="assets_frontend_form_builder"
+              inherit_id="website.assets_frontend">
+        <xpath expr="." position="inside">
+            <script src="https://www.powr.io/powr.js?platform=odoo-integrated"/>
+        </xpath>
+    </template>
+
+    <template id="snippets_powr_plugins" inherit_id="website.snippets">
+        <xpath expr="//div[@id='snippet_feature']" position="before">
+            <div id="powr_snippet_content" class="o_panel">
+                <div class="o_panel_header">
+                    <i class="fa fa-power-off"/>
+                    POWr Plugins
+                </div>
+                <div class="o_panel_body">
+
+                </div>
+                <div class="col-md-12" id="more_plugins" style="text-align:center;">
+                    <a href="https://www.powr.io/plugins?platform=odoo" target="_blank" onMouseOver="this.style.color='white'" onMouseOut="this.style.color='#007bff'">
+                        <i class="fa fa-plus"/>
+                        More POWr Plugins
+                    </a>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

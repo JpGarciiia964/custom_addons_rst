@@ -1,0 +1,1703 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+<!--  Estructura de empleados fijos  -->
+        <record id="dominican_payroll_hr_rule_basic" model="hr.salary.rule">
+            <field name="name">Salario básico</field>
+            <field name="sequence" eval="1"/>
+            <field name="code">BASIC</field>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+if payslip.struct_id.schedule_pay == 'bi-weekly':
+    if payslip.partial_worked_days:
+        result = contract.wage
+    else:
+        result = contract.wage / 2
+# elif payslip.struct_id.schedule_pay == 'hourly':
+#     result = contract.wage * sum([line.number_of_hours for line in payslip.worked_days_line_ids])
+else:
+    result = contract.wage
+
+            </field>
+        </record>
+
+        <record id="dominican_payroll_hr_rule_taxable" model="hr.salary.rule">
+            <field name="name">Salario Bruto - Salario Cotizable TSS/INFOTEP</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">GROSS</field>
+            <field name="category_id" ref="hr_payroll.GROSS"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    # get last payslip
+    last_vacation_amount = 0
+    last_INCENT = 0
+    last_GROSS = 0
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+        for line in line_ids:
+            if line.code == 'VACA':
+                last_vacation_amount = line.total
+            if line.code == 'GROSS':
+                last_GROSS = line.total
+            if line.code == 'INCENT':
+                last_INCENT = line.total
+
+        if last_slip.pay_vacation and last_slip.vacation_type in ['unpayed', 'worked']:
+
+            if last_slip.partial_worked_days:
+                result = contract.wage / 2 + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ) + last_GROSS
+            else:
+                result  = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ)
+        else:
+            if last_slip.partial_worked_days:
+                result = contract.wage / 2 + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ) + last_GROSS
+            else:
+                result = ((contract.wage / 2) if last_slip.pay_vacation and last_slip.vacation_type == 'enjoyed' else contract.wage) + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - HEPQ)
+    else:
+        if payslip.partial_worked_days:
+            result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ) + last_GROSS
+        else:
+            result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ)
+else:
+    if payslip.pay_vacation and payslip.vacation_type in ['enjoyed', 'unpayed']:
+        result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (VACA - contract.wage / 2)
+    elif payslip.pay_vacation and payslip.vacation_type in ['worked']:
+        result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (VACA)
+    else:
+        result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount
+            </field>
+        </record>
+
+        <record id="dominican_payroll_hr_rule_net" model="hr.salary.rule">
+            <field name="name">Salario neto a pagar</field>
+            <field name="sequence" eval="200"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">NET</field>
+            <field name="category_id" ref="hr_payroll.NET"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+if payslip.pay_vacation and payslip.vacation_type == 'unpayed':
+    result = categories.BASIC + categories.ALW + categories.DED + categories.COM + categories.HE + categories.INCE + categories.ODED + categories.APORA
+else:
+    result = categories.BASIC + categories.ALW + categories.DED + categories.COM + categories.HE + categories.VACA + categories.INCE + categories.ODED + categories.APORA            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="ret_sfs" model="hr.salary.rule">
+            <field name="name">Retención ARS</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SFST</field>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+#compute dependants
+dependants = 0
+if contract.codependants == 'none':
+    pass
+elif contract.codependants == '1':
+    dependants = 1190.12 / 2
+elif contract.codependants == '2':
+    dependants = 1190.12
+elif contract.codependants == '3':
+    dependants = (1190.12 * 3) / 2
+
+sfs = 0.0304
+
+last_SFS = 0
+if payslip.struct_id.schedule_pay == 'hourly':
+    result = -(GROSS * sfs) - dependants
+else:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        # Get last payslip
+        slip_ids = employee.slip_ids.sorted('id')
+        list_ids = [line.id for line in slip_ids]
+
+        if len(list_ids) &gt; 1:
+            last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+            line_ids = last_slip.mapped('line_ids')
+
+            last_SFS = 0
+
+            for line in line_ids:
+                if line.code == 'SFST':
+                    last_SFS = line.total * -1 # Multiply by -1 to make the amount positive
+        else:
+            last_SFS = 0
+
+    if (GROSS) &gt; 134820:
+
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            if payslip_day &gt;= 12 and payslip_day &lt;= 15:
+                result = -(3595.1+dependants)
+            elif payslip_day &gt;= 25 and payslip_day &lt;= 31:
+                result = -dependants
+
+        if contract.deduction_plan and contract.deduction_quarter == 'second':
+            if payslip_day &gt;= 12 and payslip_day &lt;= 15:
+                result = -dependants
+            elif payslip_day &gt;= 15 and payslip_day &lt;= 31:
+                result = -(3595.1 + dependants)
+
+        if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+            result =  -(3595.1 - (last_SFS - dependants) + dependants)
+        else:
+            result = -(3595.1 * 0.5 + dependants)
+
+    else:
+        if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+            if contract.deduction_plan and contract.deduction_quarter == 'first':
+                result = -dependants
+            elif contract.deduction_plan and contract.deduction_quarter == 'second':
+                result =  -(((GROSS * sfs) + dependants) - last_SFS)
+            else:
+                if payslip.partial_worked_days:
+                    result = -(((GROSS * sfs) + dependants) - last_SFS)
+                else:
+                    result = -(GROSS * sfs + dependants * 2 - last_SFS)
+
+        elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+            result = -((GROSS * sfs) + dependants)
+        else:
+            if contract.deduction_plan and contract.deduction_quarter == 'first':
+                result = -((GROSS * sfs) + dependants)
+            elif contract.deduction_plan and contract.deduction_quarter == 'second':
+                result = -dependants
+            else:
+                result = -(((GROSS * sfs) * 0.5) + dependants)
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_tss"/>-->
+        </record>
+
+        <record id="ret_afp" model="hr.salary.rule">
+            <field name="name">Retención AFP</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SVDS</field>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+afp = 0.0287
+
+last_AFP = 0
+if payslip.struct_id.schedule_pay == 'hourly':
+    result = -(GROSS * afp)
+else:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        # Get last
+        slip_ids = employee.slip_ids.sorted('id')
+        list_ids = [line.id for line in slip_ids]
+
+        if len(list_ids) &gt; 1:
+            last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+            line_ids = last_slip.mapped('line_ids')
+
+            for line in line_ids:
+                if line.code == 'SVDS':
+                    last_AFP = line.total * -1 # Multiply by -1 to make the amount positive
+        else:
+            last_AFP = 0
+
+
+
+    if (GROSS) &gt; 269640:
+    #########################################################
+
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            if payslip_day &gt;= 12 and payslip_day &lt;= 15:
+                result = -(6788.12)
+            elif payslip_day &gt;= 25 and payslip_day &lt;= 31:
+                result = 0
+
+        if contract.deduction_plan and contract.deduction_quarter == 'second':
+            if payslip_day &gt;= 12 and payslip_day &lt;= 15:
+                result = 0
+            elif payslip_day &gt;= 15 and payslip_day &lt;= 31:
+                result = -(6788.12)
+
+    #########################################################
+
+
+        if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+            result =  -(6788.12 - last_AFP)
+        else:
+             result = -6788.12
+
+    else:
+        if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+            if contract.deduction_plan and contract.deduction_quarter == 'first':
+                result = 0
+            elif contract.deduction_plan and contract.deduction_quarter == 'second':
+                result =  -(GROSS * afp - last_AFP)
+            else:
+                if payslip.partial_worked_days:
+                    result = -(GROSS * afp - last_AFP)
+                else:
+                    result = -(GROSS * afp - last_AFP)
+        elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+             result = -(GROSS * afp)
+        else:
+            if contract.deduction_plan and contract.deduction_quarter == 'first':
+                result = -(GROSS * afp)
+            elif contract.deduction_plan and contract.deduction_quarter == 'second':
+                result =  0
+            else:
+                result = -(GROSS * afp) * 0.5
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_tss"/>-->
+        </record>
+
+        <record id="cont_sfs" model="hr.salary.rule">
+            <field name="name">Contribución del empleador SFS</field>
+            <field name="sequence" eval="6"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SFS E</field>
+            <field name="category_id" ref="hr_payroll.COMP"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+if payslip.struct_id.schedule_pay == 'hourly':
+    result = -(GROSS * 0.0709)
+else:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        # Get last
+        slip_ids = employee.slip_ids.sorted('id')
+        list_ids = [line.id for line in slip_ids]
+
+        if len(list_ids) &gt; 1:
+            last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+            line_ids = last_slip.mapped('line_ids')
+            last_SFS_E = 0
+
+            for line in line_ids:
+                if line.code == 'SFS E':
+                    last_SFS_E = line.total
+
+            result = (GROSS * 0.0709) - last_SFS_E
+        else:
+            if payslip.partial_worked_days:
+                result = GROSS * 0.0709
+            else:
+                result = GROSS * 0.0709 * 0.5
+    else:
+        result = GROSS * 0.0709 * 0.5
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_tss"/>-->
+        </record>
+
+        <record id="cont_afp" model="hr.salary.rule">
+            <field name="name">Contribución del Empleador AFP</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SVDS E</field>
+            <field name="category_id" ref="hr_payroll.COMP"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+if payslip.struct_id.schedule_pay == 'hourly':
+    result = -(GROSS * 0.071)
+else:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        # Get last
+        slip_ids = employee.slip_ids.sorted('id')
+        list_ids = [line.id for line in slip_ids]
+
+        if len(list_ids) &gt; 1:
+            last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+            line_ids = last_slip.mapped('line_ids')
+            last_SVDS_E = 0
+
+            for line in line_ids:
+                if line.code == 'SVDS E':
+                    last_SVDS_E = line.total
+
+            result = (GROSS * 0.071) - last_SVDS_E
+        else:
+            if payslip.partial_worked_days:
+                result = GROSS * 0.071
+            else:
+                result = GROSS * 0.071 * 0.5
+    else:
+        result = GROSS * 0.071 * 0.5
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_tss"/>-->
+        </record>
+
+        <record id="cont_srl" model="hr.salary.rule">
+            <field name="name">Contribución Seguro de Riesgos Laborales (SRL)</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SRL E</field>
+            <field name="category_id" ref="hr_payroll.COMP"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+if payslip.struct_id.schedule_pay == 'hourly':
+    result = -(GROSS * 0.0104)
+else:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        # Get last
+        slip_ids = employee.slip_ids.sorted('id')
+        list_ids = [line.id for line in slip_ids]
+
+        if len(list_ids) &gt; 1:
+            last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+            line_ids = last_slip.mapped('line_ids')
+            last_SRL_E = 0
+
+            for line in line_ids:
+                if line.code == 'SRL E':
+                    last_SRL_E = line.total
+
+            result = (GROSS * 0.0104) - last_SRL_E
+        else:
+            if payslip.partial_worked_days:
+                result = GROSS * 0.0104
+            else:
+                result = GROSS * 0.0104 * 0.5
+    else:
+        result = GROSS * 0.0104 * 0.5
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_tss"/>-->
+        </record>
+
+        <record id="ret_isr" model="hr.salary.rule">
+            <field name="name">Impuesto Sobre la Renta</field>
+            <field name="sequence" eval="6"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">ISR</field>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+cotizable = 0.0
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    cotizable = (GROSS + categories.HE) * 12
+else:
+    cotizable = (GROSS + categories.HE) * 12
+
+if cotizable &gt;= 416220.00:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# afp = 0.0287
+# sfs = 0.0304
+
+# Get payslip date to compute second quarter ISR
+date_to = payslip.date_to
+payslip_day = date_to.day
+# ----------------------------------------------
+sfisr = 0
+if inputs.SFISR.amount > 0:
+    sfisr = inputs.SFISR.amount
+last_ISR = 0
+# Get ISR
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+
+        last_ISR = 0
+
+        for line in line_ids:
+            if line.code == 'ISR':
+                last_ISR = line.total * -1  # multiply by -1 to make the amount positive
+
+# Compute ISR
+sueldoneto = SCISR * 12
+
+# desde          hasta       tasa
+rangos = [[0, 416220.00, 0],
+          [416220.01, 624329.00, 0.15],
+          [624329.01, 867123.00, 0.20],
+          [867123.01, 0, 0.25]]
+
+tasa1 = (rangos[1][1] - rangos[0][1]) * rangos[1][2]
+tasa2 = (rangos[2][1] - rangos[1][1]) * rangos[2][2]
+tasatotal = tasa1 + tasa2
+if sueldoneto &lt;= rangos[0][1]:
+    result = 0
+# rango 1
+elif sueldoneto &gt;= rangos[1][0] and sueldoneto &lt;= rangos[1][1]:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = 0
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = -((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12)-sfisr)
+        else:
+            result = -(((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12) - last_ISR)-sfisr)
+
+    elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        result = -((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12)-sfisr)
+    else:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = -((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12)-sfisr)
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = 0
+        else:
+            result = -(((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12) * 0.5)-sfisr)
+
+# rango 2
+elif sueldoneto &gt;= rangos[2][0] and sueldoneto &lt;= rangos[2][1]:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = 0
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = -(((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12)-sfisr)
+        else:
+            result = -((((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12) - last_ISR)-sfisr)
+    elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        result = -(((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12)-sfisr)
+    else:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = -(((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12)-sfisr)
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = 0
+        else:
+            result = -((((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12) * 0.5)-sfisr)
+
+# rango 3
+else:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = 0
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = -((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12)-sfisr)
+        else:
+            result = -(((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12) - last_ISR)-sfisr)
+    elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        result = -((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12)-sfisr)
+    else:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result =  -((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12)-sfisr)
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = 0
+        else:
+            result = -(((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12) * 0.5)-sfisr)
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_dgii"/>-->
+        </record>
+
+        <record id="cont_infotep" model="hr.salary.rule">
+            <field name="name">Contribución Infotep</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">CINF</field>
+            <field name="category_id" ref="hr_payroll.COMP"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    # Get last
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+
+    if len(list_ids) &gt; 1:
+        last_CINF = 0
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+        last_CINF = 0
+
+        for line in line_ids:
+            if line.code == 'CINF':
+                last_CINF = line.total
+        result = (GROSS * 0.01) - last_CINF
+
+    else:
+        if payslip.partial_worked_days:
+            result = GROSS * 0.01
+        else:
+            result = GROSS * 0.01 * 0.5
+else:
+    result = GROSS * 0.01 * 0.5
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_infotep"/>-->
+        </record>
+
+        <record id="comissions" model="hr.salary.rule">
+            <field name="name">Comisiones</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">COMM</field>
+            <field name="category_id" ref="dominican_payroll.COM"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+if inputs.COMIVE.amount > 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+result = inputs.COMIVE.amount
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="quotable_isr_salary" model="hr.salary.rule">
+            <field name="name">Salario Cotizable ISR</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SCISR</field>
+            <field name="category_id" ref="dominican_payroll.SALCOT"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+cotizable = 0.0
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    cotizable = (GROSS + categories.HE + categories.INCE) * 12
+else:
+    cotizable = (GROSS + categories.HE + categories.INCE) * 12
+
+if cotizable &gt;= 416220.00:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# COMM, VACA, INCENT
+
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+last_AFP = 0
+last_SFS = 0
+last_GROSS = 0
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+    salariocotizable = contract.wage + categories.COM + categories.HE + categories.VACA + categories.INCE + NOVAN
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+
+        for line in line_ids:
+            if line.code == 'SFST':
+                last_SFS = line.total
+            if line.code == 'SVDS':
+                last_AFP = line.total
+            if line.code == 'GROSS':
+                last_GROSS = line.total
+
+    if contract.deduction_plan and contract.deduction_quarter == 'first':
+        result = salariocotizable + SVDS + SFST
+    elif contract.deduction_plan and contract.deduction_quarter == 'second':
+        result = salariocotizable + SVDS + SFST
+    else:
+        if payslip.partial_worked_days:
+            result = salariocotizable / 2 + SVDS + SFST + last_GROSS
+        else:
+            result = salariocotizable + last_AFP + last_SFS + SVDS + SFST
+else:
+    if payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        salariocotizable = contract.wage / 2 +  categories.COM  + categories.HE + categories.VACA + categories.INCE
+        result = salariocotizable + SFST + SVDS
+    elif payslip.pay_vacation and payslip.vacation_type == 'unpayed':
+        salariocotizable = contract.wage + categories.COM  + categories.HE + (VACA-contract.wage/2) + categories.INCE
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = salariocotizable + SFST + SVDS
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = salariocotizable + SFST + SVDS
+        else:
+            if payslip.partial_worked_days:
+                result = salariocotizable / 2 + SVDS + SFST + last_GROSS
+            else:
+                result = salariocotizable + SFST*2 + SVDS*2
+
+    else:
+        salariocotizable = contract.wage + categories.COM  + categories.HE + categories.VACA + categories.INCE
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = salariocotizable + SFST + SVDS
+
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = salariocotizable + SFST + SVDS
+        else:
+            if payslip.partial_worked_days:
+                result = salariocotizable / 2 + SVDS + SFST + last_GROSS
+            else:
+                result = salariocotizable + SFST*2 + SVDS*2
+            </field>
+        </record>
+
+        <record id="extra_hours" model="hr.salary.rule">
+            <field name="name">Horas No Regulares</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">HOREX</field>
+            <field name="category_id" ref="dominican_payroll.HE"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# inputs.HE15 inputs.HE35 inputs.HE50 inputs.HE100
+
+if (inputs.HE15.amount > 0) or (inputs.HE35.amount > 0)  or (inputs.HE50.amount > 0)  or (inputs.HE100.amount > 0) :
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.HE15 | inputs.HE35 | inputs.HE50 | inputs.HE100
+
+if payslip.struct_id.schedule_pay == 'hourly':
+    # TODO quince = contract.wage * 0.15 * inputs.HE15.amount (El salario está abultado)
+    quince = 0
+    treinta_y_cinco = contract.wage_extra_hour * inputs.HE35.amount
+    # TODO cincuenta = contract.wage * 1.50 * inputs.HE50.amount (El salario está abultado)
+    cincuenta = 0
+    cien = contract.wage_holidays_hour * inputs.HE100.amount
+else:
+    salario_mensual = contract.wage
+    quince = (((salario_mensual / 23.83) / 8) * 0.15) * inputs.HE15.amount
+    treinta_y_cinco = (((salario_mensual / 23.83) / 8) * 1.35) * inputs.HE35.amount
+    cincuenta = (((salario_mensual / 23.83) / 8) * 1.50) * inputs.HE50.amount
+    cien = (((salario_mensual / 23.83) / 8) * 2) * inputs.HE100.amount
+
+result = quince + treinta_y_cinco + cincuenta + cien
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="incentives" model="hr.salary.rule">
+            <field name="name">Incentivos</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">INCENT</field>
+            <field name="category_id" ref="dominican_payroll.INCE"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+if inputs.INCEN.amount > 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.INCEN
+
+result = inputs.INCEN.amount
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="vacations" model="hr.salary.rule">
+            <field name="name">Vacaciones</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">VACA</field>
+            <field name="category_id" ref="dominican_payroll.VACA"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# inputs.VACA
+
+if payslip.pay_vacation:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.VACA
+
+result = (contract.wage / 23.83) * inputs.VACA.amount
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="cafeteria" model="hr.salary.rule">
+            <field name="name">Cafetería</field>
+            <field name="sequence" eval="148"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">CAFE</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+if inputs.CAFE.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.CAFE
+result = -(inputs.CAFE.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="farmacia" model="hr.salary.rule">
+            <field name="name">Farmacia</field>
+            <field name="sequence" eval="148"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">FARMA</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.FARMA.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.FARMA
+
+result = -(inputs.FARMA.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="ahorro" model="hr.salary.rule">
+            <field name="name">Ahorro</field>
+            <field name="sequence" eval="148"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">AHORRO</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.AHORRO.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+
+result = -(inputs.AHORRO.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="restaurant" model="hr.salary.rule">
+            <field name="name">Restaurante</field>
+            <field name="sequence" eval="149"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">REST</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.REST.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.REST
+
+result = -(inputs.REST.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="medical_assurance" model="hr.salary.rule">
+            <field name="name">Seguro complementario</field>
+            <field name="sequence" eval="150"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SEGMED</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.SEGMED.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.SEGMED
+
+result = -(inputs.SEGMED.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="salary_advance" model="hr.salary.rule">
+            <field name="name">Avances a sueldo</field>
+            <field name="sequence" eval="151"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">AVAN</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.AVAN.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.AVAN
+
+result = -(inputs.AVAN.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="financial" model="hr.salary.rule">
+            <field name="name">Financiera</field>
+            <field name="sequence" eval="152"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">FINAN</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.FINAN.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.FINAN
+
+result = -(inputs.FINAN.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="other_deductions" model="hr.salary.rule">
+            <field name="name">Otros descuentos</field>
+            <field name="sequence" eval="155"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">OTDESC</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.OTDESC.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.OTDESC
+
+result = -(inputs.OTDESC.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="additional_contribution_sfs" model="hr.salary.rule">
+            <field name="name">Aportes adicionales SFS</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">APORSFS</field>
+            <field name="category_id" ref="dominican_payroll.APORA"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+
+if inputs.APORSFS.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.APORSFS
+
+result = -(inputs.APORSFS.amount)
+            </field>
+<!--            <field name="register_id" ref="contribution_register_tss"/>-->
+        </record>
+
+        <record id="additional_contribution_afp" model="hr.salary.rule">
+            <field name="name">Aportes adicionales AFP</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">APORAFP</field>
+            <field name="category_id" ref="dominican_payroll.APORA"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.APORAFP.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.APORAFP
+
+result = -(inputs.APORAFP.amount)
+            </field>
+<!--            <field name="register_id" ref="contribution_register_tss"/>-->
+        </record>
+
+        <record id="isr_positive_balance" model="hr.salary.rule">
+            <field name="name">Saldo a favor ISR</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">SFISR</field>
+            <field name="category_id" ref="dominican_payroll.SFISR"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.SFISR.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.SFISR
+
+result = inputs.SFISR.amount
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="previous_news" model="hr.salary.rule">
+            <field name="name">Novedades Anteriores</field>
+            <field name="sequence" eval="4"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">NOVAN</field>
+            <field name="category_id" ref="dominican_payroll.NOAN"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# COMM, VACA, INCENT
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+
+        last_comission = 0
+        last_VACA = 0
+        last_INCENT = 0
+
+        for line in line_ids:
+            if line.code == 'COMM':
+                last_comission = line.total
+            if line.code == 'VACA':
+                last_VACA = line.total
+            if line.code == 'INCENT':
+                last_INCENT = line.total
+
+        novedades_anteriores = HEPQ + last_comission + last_VACA + last_INCENT
+
+        if novedades_anteriores &gt; 0:
+            result = novedades_anteriores
+        else:
+            result = 0
+    else:
+        result = 0
+else:
+    result = 0
+            </field>
+        </record>
+
+        <record id="previous_extra_hours" model="hr.salary.rule">
+            <field name="name">Horas extras primera quincena</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_permanent_employees"/>
+            <field name="code">HEPQ</field>
+            <field name="category_id" ref="dominican_payroll.NOAN"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+slip_ids = employee.slip_ids.sorted('id')
+list_ids = [line.id for line in slip_ids]
+if len(list_ids) &gt; 1:
+    last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+    line_ids = last_slip.mapped('line_ids')
+    last_HE = 0
+
+    for line in line_ids:
+        if line.code == 'HOREX':
+            last_HE = line.total
+
+    if last_HE &gt; 0:
+        result = last_HE
+    else:
+        result = 0
+else:
+    result = 0
+            </field>
+        </record>
+
+        <!--Estructura de doble sueldo / regalía -->
+        <record id="cumulative_salary_computation" model="hr.salary.rule">
+            <field name="name">Cómputo acumulativo de salarios</field>
+            <field name="sequence" eval="1"/>
+            <field name="struct_id" ref="dominican_payroll.christmas_salary_structure"/>
+            <field name="code">ACUSAL</field>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+actual_year = payslip.date_to.year
+date_start_str = '{}-01-01'.format(actual_year)
+date_start = employee.convert_to_date(date_start_str)
+date_end_str = '{}-12-31'.format(actual_year)
+date_end = employee.convert_to_date(date_end_str)
+payslips_lines = employee.slip_ids.filtered(lambda p: p.date_from &gt;= date_start and p.date_to &lt;= date_end and p.id != payslip.id).mapped('line_ids')
+lines = payslips_lines.filtered(lambda l: l.code == 'BASIC' or l.code == 'INCENT' or l.code == 'COMM')
+amount = sum(line.total for line in lines)
+result = amount
+            </field>
+        </record>
+
+        <record id="net_christmas_salary" model="hr.salary.rule">
+            <field name="name">Regalía / Doble sueldo</field>
+            <field name="sequence" eval="100"/>
+            <field name="struct_id" ref="dominican_payroll.christmas_salary_structure"/>
+            <field name="code">REG/DOB</field>
+            <field name="category_id" ref="hr_payroll.NET"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+result = categories.BASIC / 12
+            </field>
+        </record>
+
+        <!--Estructura de empleados extranjeros -->
+        <record id="hr_rule_basic_foreign_employees" model="hr.salary.rule">
+            <field name="name">Salario básico Empleados Extranjeros</field>
+            <field name="sequence" eval="1"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">BASIC</field>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+if payslip.struct_id.schedule_pay == 'bi-weekly':
+    if payslip.partial_worked_days:
+        result = contract.wage
+    else:
+        result = contract.wage / 2
+else:
+    result = contract.wage
+            </field>
+        </record>
+
+        <record id="dominican_payroll_hr_rule_taxable_foreign_employees" model="hr.salary.rule">
+            <field name="name">Salario Bruto - Salario Cotizable Empleados Extranjeros</field>
+            <field name="sequence" eval="4"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">GROSS</field>
+            <field name="category_id" ref="hr_payroll.GROSS"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    # get last payslip
+    last_vacation_amount = 0
+    last_INCENT = 0
+    last_GROSS = 0
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+        for line in line_ids:
+            if line.code == 'VACA':
+                last_vacation_amount = line.total
+            if line.code == 'GROSS':
+                last_GROSS = line.total
+            if line.code == 'INCENT':
+                last_INCENT = line.total
+
+        if last_slip.pay_vacation and last_slip.vacation_type in ['unpayed', 'worked']:
+            if last_slip.partial_worked_days:
+                result = contract.wage / 2 + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ) + last_GROSS
+            else:
+                result  = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ)
+        else:
+            if last_slip.partial_worked_days:
+                result = contract.wage / 2 + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ) + last_GROSS
+            else:
+                result = ((contract.wage / 2) if last_slip.pay_vacation and last_slip.vacation_type == 'enjoyed' else contract.wage) + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - HEPQ)
+    else:
+        if payslip.partial_worked_days:
+            result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ) + last_GROSS
+        else:
+            result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (NOVAN - last_INCENT - HEPQ)
+else:
+    if payslip.pay_vacation and payslip.vacation_type in ['enjoyed', 'unpayed']:
+        result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (VACA - contract.wage / 2)
+    elif payslip.pay_vacation and payslip.vacation_type in ['worked']:
+        result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount + (VACA)
+    else:
+        result = contract.wage + categories.ALW + categories.INCE + inputs.COMIVE.amount
+            </field>
+        </record>
+
+        <record id="hr_rule_net_foreign_employees" model="hr.salary.rule">
+            <field name="name">Salario neto a pagar Empleados Extranjeros</field>
+            <field name="sequence" eval="200"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">NET</field>
+            <field name="category_id" ref="hr_payroll.NET"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+result = categories.BASIC + categories.DED + categories.COM + categories.HE + categories.INCE + categories.ODED
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="comissions_foreign_employees" model="hr.salary.rule">
+            <field name="name">Comisiones Empleados Extranjeros</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">COMM</field>
+            <field name="category_id" ref="dominican_payroll.COM"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+if inputs.COMIVE.amount > 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+result = inputs.COMIVE.amount
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="incentives_foreign_employees" model="hr.salary.rule">
+            <field name="name">Incentivos Empleados Extranjeros</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">INCENT</field>
+            <field name="category_id" ref="dominican_payroll.INCE"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+if inputs.INCEN.amount > 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.INCEN
+
+result = inputs.INCEN.amount
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="extra_hours_foreign_employees" model="hr.salary.rule">
+            <field name="name">Horas No Regulares Empleados Extranjeros</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">HOREX</field>
+            <field name="category_id" ref="dominican_payroll.HE"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# inputs.HE15 inputs.HE35 inputs.HE50 inputs.HE100
+
+if (inputs.HE15.amount > 0) or (inputs.HE35.amount > 0)  or (inputs.HE50.amount > 0)  or (inputs.HE100.amount > 0) :
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.HE15 | inputs.HE35 | inputs.HE50 | inputs.HE100
+
+if payslip.struct_id.schedule_pay == 'hourly':
+    # TODO quince = contract.wage * 0.15 * inputs.HE15.amount (El salario está abultado)
+    quince = 0
+    treinta_y_cinco = contract.wage_extra_hour * inputs.HE35.amount
+    # TODO cincuenta = contract.wage * 1.50 * inputs.HE50.amount (El salario está abultado)
+    cincuenta = 0
+    cien = contract.wage_holidays_hour * inputs.HE100.amount
+else:
+    salario_mensual = contract.wage
+    quince = (((salario_mensual / 23.83) / 8) * 0.15) * inputs.HE15.amount
+    treinta_y_cinco = (((salario_mensual / 23.83) / 8) * 1.35) * inputs.HE35.amount
+    cincuenta = (((salario_mensual / 23.83) / 8) * 1.50) * inputs.HE50.amount
+    cien = (((salario_mensual / 23.83) / 8) * 2) * inputs.HE100.amount
+
+result = quince + treinta_y_cinco + cincuenta + cien
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="previous_extra_hours_foreign_employees" model="hr.salary.rule">
+            <field name="name">Horas extras primera quincena</field>
+            <field name="sequence" eval="3"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">HEPQ</field>
+            <field name="category_id" ref="dominican_payroll.NOAN"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+slip_ids = employee.slip_ids.sorted('id')
+list_ids = [line.id for line in slip_ids]
+if len(list_ids) &gt; 1:
+    last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+    line_ids = last_slip.mapped('line_ids')
+    last_HE = 0
+
+    for line in line_ids:
+        if line.code == 'HOREX':
+            last_HE = line.total
+
+    if last_HE &gt; 0:
+        result = last_HE
+    else:
+        result = 0
+else:
+    result = 0
+            </field>
+        </record>
+
+        <record id="financial_foreign_employees" model="hr.salary.rule">
+            <field name="name">Financiera Empleados Extranjeros</field>
+            <field name="sequence" eval="152"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">FINAN</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.FINAN.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.FINAN
+
+result = -(inputs.FINAN.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="farmacia_foreign_employees" model="hr.salary.rule">
+            <field name="name">Farmacia Empleados Extranjeros</field>
+            <field name="sequence" eval="148"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">FARMA</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.FARMA.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.FARMA
+
+result = -(inputs.FARMA.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="ahorro_foreign_employees" model="hr.salary.rule">
+            <field name="name">Ahorro Empleados Extranjeros</field>
+            <field name="sequence" eval="148"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">AHORRO</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.AHORRO.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.AHORRO
+
+result = -(inputs.AHORRO.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="restaurant_foreign_employees" model="hr.salary.rule">
+            <field name="name">Restaurante Empleados Extranjeros</field>
+            <field name="sequence" eval="149"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">REST</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.REST.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.REST
+
+result = -(inputs.REST.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+
+        <record id="other_deductions_foreign_employees" model="hr.salary.rule">
+            <field name="name">Otros descuentos Empleados Extranjeros</field>
+            <field name="sequence" eval="155"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">OTDESC</field>
+            <field name="category_id" ref="dominican_payroll.ODED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.OTDESC.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.OTDESC
+
+result = -(inputs.OTDESC.amount)
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+        <record id="ret_isr_foreign_employees" model="hr.salary.rule">
+            <field name="name">Impuesto Sobre la Renta Empleados Extranjeros</field>
+            <field name="sequence" eval="6"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">ISR</field>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+cotizable = 0.0
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    cotizable = (GROSS + categories.HE) * 12
+else:
+    cotizable = (GROSS + categories.HE) * 12
+
+if cotizable &gt;= 416220.00:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# afp = 0.0287
+# sfs = 0.0304
+
+# Get payslip date to compute second quarter ISR
+date_to = payslip.date_to
+payslip_day = date_to.day
+# ----------------------------------------------
+sfisr = 0
+if inputs.code == 'SFISR' and inputs.amount > 0:
+    sfisr = inputs.SFISR.amount
+last_ISR = 0
+# Get ISR
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+
+        last_ISR = 0
+
+        for line in line_ids:
+            if line.code == 'ISR':
+                last_ISR = line.total * -1  # multiply by -1 to make the amount positive
+
+# Compute ISR
+sueldoneto = SCISR * 12
+
+# desde          hasta       tasa
+rangos = [[0, 416220.00, 0],
+          [416220.01, 624329.00, 0.15],
+          [624329.01, 867123.00, 0.20],
+          [867123.01, 0, 0.25]]
+
+tasa1 = (rangos[1][1] - rangos[0][1]) * rangos[1][2]
+tasa2 = (rangos[2][1] - rangos[1][1]) * rangos[2][2]
+tasatotal = tasa1 + tasa2
+if sueldoneto &lt;= rangos[0][1]:
+    result = 0
+# rango 1
+elif sueldoneto &gt;= rangos[1][0] and sueldoneto &lt;= rangos[1][1]:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = 0
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = -((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12)-sfisr)
+        else:
+            result = -(((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12) - last_ISR)-sfisr)
+
+    elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        result = -((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12)-sfisr)
+    else:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = -((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12)-sfisr)
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = 0
+        else:
+            result = -(((((sueldoneto - rangos[1][0]) * rangos[1][2]) / 12) * 0.5)-sfisr)
+
+# rango 2
+elif sueldoneto &gt;= rangos[2][0] and sueldoneto &lt;= rangos[2][1]:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = 0
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = -(((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12)-sfisr)
+        else:
+            result = -((((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12) - last_ISR)-sfisr)
+    elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        result = -(((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12)-sfisr)
+    else:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = -(((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12)-sfisr)
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = 0
+        else:
+            result = -((((tasa1 + ((sueldoneto - rangos[2][0]) * rangos[2][2])) / 12) * 0.5)-sfisr)
+
+# rango 3
+else:
+    if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = 0
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = -((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12)-sfisr)
+        else:
+            result = -(((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12) - last_ISR)-sfisr)
+    elif payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        result = -((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12)-sfisr)
+    else:
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result =  -((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12)-sfisr)
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = 0
+        else:
+            result = -(((((tasatotal) + ((sueldoneto - rangos[3][0]) * rangos[3][2])) / 12) * 0.5)-sfisr)
+            </field>
+<!--            <field name="register_id" ref="dominican_payroll.contribution_register_dgii"/>-->
+        </record>
+
+        <record id="isr_positive_balance_foreign_employees" model="hr.salary.rule">
+            <field name="name">Saldo a favor ISR Empleados Extranjeros</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">SFISR</field>
+            <field name="category_id" ref="dominican_payroll.SFISR"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+
+if inputs.SFISR.amount &gt; 0:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# inputs.SFISR
+
+result = inputs.SFISR.amount
+            </field>
+<!--            <field name="register_id" ref="hr_payroll.contrib_register_employees"/>-->
+        </record>
+        <record id="quotable_isr_salary_foreign_employees" model="hr.salary.rule">
+            <field name="name">Salario Cotizable ISR Empleados Extranjeros</field>
+            <field name="sequence" eval="5"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">SCISR</field>
+            <field name="category_id" ref="dominican_payroll.SALCOT"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+cotizable = 0.0
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    cotizable = (GROSS + categories.HE + categories.INCE) * 12
+else:
+    cotizable = (GROSS + categories.HE + categories.INCE) * 12
+
+if cotizable &gt;= 416220.00:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# COMM, VACA, INCENT
+
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+last_GROSS = 0
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+    salariocotizable = contract.wage + categories.COM + categories.HE + categories.VACA + categories.INCE + NOVAN
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+
+        for line in line_ids:
+            if line.code == 'GROSS':
+                last_GROSS = line.total
+
+    if contract.deduction_plan and contract.deduction_quarter == 'first':
+        result = salariocotizable
+    elif contract.deduction_plan and contract.deduction_quarter == 'second':
+        result = salariocotizable
+    else:
+        if payslip.partial_worked_days:
+            result = salariocotizable / 2 + last_GROSS
+        else:
+            result = salariocotizable
+else:
+    if payslip.pay_vacation and payslip.vacation_type == 'enjoyed':
+        salariocotizable = contract.wage / 2 +  categories.COM  + categories.HE + categories.VACA + categories.INCE
+        result = salariocotizable
+    elif payslip.pay_vacation and payslip.vacation_type == 'unpayed':
+        salariocotizable = contract.wage + categories.COM  + categories.HE + (VACA-contract.wage/2) + categories.INCE
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = salariocotizable
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = salariocotizable
+        else:
+            if payslip.partial_worked_days:
+                result = salariocotizable / 2 + last_GROSS
+            else:
+                result = salariocotizable
+
+    else:
+        salariocotizable = contract.wage + categories.COM  + categories.HE + categories.VACA + categories.INCE
+        if contract.deduction_plan and contract.deduction_quarter == 'first':
+            result = salariocotizable
+
+        elif contract.deduction_plan and contract.deduction_quarter == 'second':
+            result = salariocotizable
+        else:
+            if payslip.partial_worked_days:
+                result = salariocotizable / 2 + last_GROSS
+            else:
+                result = salariocotizable
+            </field>
+        </record>
+
+        <record id="previous_news_foreign_employees" model="hr.salary.rule">
+            <field name="name">Novedades Anteriores Empleados Extranjeros</field>
+            <field name="sequence" eval="4"/>
+            <field name="struct_id" ref="dominican_payroll.structure_foreign_employees"/>
+            <field name="code">NOVAN</field>
+            <field name="category_id" ref="dominican_payroll.NOAN"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+date_to = payslip.date_to
+payslip_day = date_to.day
+
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    result = True
+else:
+    result = False
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# COMM, VACA, INCENT
+if payslip_day &gt;= 25 and payslip_day &lt;= 31:
+    slip_ids = employee.slip_ids.sorted('id')
+    list_ids = [line.id for line in slip_ids]
+
+    if len(list_ids) &gt; 1:
+        last_slip = employee.mapped('slip_ids').browse([list_ids[list_ids.index(payslip.id)-1]])
+        line_ids = last_slip.mapped('line_ids')
+
+        last_comission = 0
+        last_VACA = 0
+        last_INCENT = 0
+
+        for line in line_ids:
+            if line.code == 'COMM':
+                last_comission = line.total
+            if line.code == 'VACA':
+                last_VACA = line.total
+            if line.code == 'INCENT':
+                last_INCENT = line.total
+
+        novedades_anteriores = HEPQ + last_comission + last_VACA + last_INCENT
+
+        if novedades_anteriores &gt; 0:
+            result = novedades_anteriores
+        else:
+            result = 0
+    else:
+        result = 0
+else:
+    result = 0
+            </field>
+        </record>
+
+    </data>
+</odoo>

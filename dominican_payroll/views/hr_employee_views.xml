@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Form View to Modify it -->
+    <record id="hr_employee_form_view_inherited" model="ir.ui.view">
+        <field name="name">hr.employee.form.view.inherited</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="before">
+                <group>
+                    <field name="employee_code"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//page[last()]" position="after">
+                <!-- Add your fields or attributes here -->
+                <page name="loans" string="Préstamos" groups="hr.group_hr_manager,hr_payroll.group_hr_payroll_manager">
+                    <field name="loan_ids" readonly="1" context="{'group_by':'state'}">
+                        <tree>
+                            <field name="name"/>
+                            <field name="rate_id"/>
+                            <field name="amount"/>
+                            <field name="next_fee"/>
+                            <field name="fee_count"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+
+            <xpath expr="//page[@name='personal_information']/group/group[2]" position="after">
+                <!-- Add your fields or attributes here -->
+                <group string="TSS">
+                    <field name="names" required="1"/>
+                    <field name="first_lastname" required="1"/>
+                    <field name="second_lastname" required="1"/>
+                    <field name="income_type" required="1"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

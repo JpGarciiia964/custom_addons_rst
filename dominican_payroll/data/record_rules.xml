@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="hr_payroll.hr_payslip_rule_manager" model="ir.rule">
+            <field name="domain_force">['|',('company_id','=',False),('company_id','child_of',[user.company_id.id])]</field>
+        </record>
+        <record id="multi_company_contract_rule" model="ir.rule">
+            <field name="name">contract by company</field>
+            <field name="model_id" ref="hr_contract.model_hr_contract"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id','child_of',[user.company_id.id])]</field>
+        </record>
+        <record id="multi_company_hr_payslip_run_rule" model="ir.rule">
+            <field name="name">process by company</field>
+            <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="domain_force">['|', ('slip_ids','=',False), '|',('slip_ids.company_id','=',False),('slip_ids.company_id','child_of',[user.company_id.id])]</field>
+        </record>
+        <record id="multi_company_hr_payslip_rule" model="ir.rule">
+            <field name="name">process by company</field>
+            <field name="model_id" ref="hr_payroll.model_hr_payslip"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id','child_of',[user.company_id.id])]</field>
+        </record>
+    </data>
+</odoo>

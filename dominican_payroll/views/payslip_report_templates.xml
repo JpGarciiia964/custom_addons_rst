@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<!--    <template id="report_payslip_dominican_payroll_inherited" inherit_id="hr_payroll.report_payslip">-->
+<!--        <xpath expr="//table[2]/tbody" position="replace">-->
+<!--            <tbody>-->
+<!--                <tr t-foreach="o.line_ids.filtered(lambda line: line.appears_on_payslip)" t-as="line">-->
+<!--                    <t t-if="line.salary_rule_id.code == 'FINAN'">-->
+<!--                        <t t-foreach="line.employee_id.loan_ids" t-as="loan">-->
+<!--                            <tr t-foreach="loan.loan_line_ids.filtered(lambda loan_line: loan_line.payslip_id.id == o.id)"-->
+<!--                                t-as="loan_line">-->
+<!--                                <td>Cuota <span t-esc="loan_line.number"/> de <span t-esc="loan.fee_count"/></td>-->
+<!--                                <td><span t-field="loan.name"/></td>-->
+<!--                                <td><span t-field="loan_line.rate"/></td>-->
+<!--                                <td><span t-esc="round(loan_line.dues * -1, 2)"-->
+<!--                                          t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>-->
+<!--                                <td><span t-esc="round(loan_line.dues * -1, 2)"-->
+<!--                                          t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>-->
+<!--                            </tr>-->
+<!--                        </t>-->
+<!--                    </t>-->
+<!--                    <t t-else="">-->
+<!--                        <td><span t-field="line.code"/></td>-->
+<!--                        <td><span t-field="line.name"/></td>-->
+<!--                        <td><span t-field="line.quantity"/></td>-->
+<!--                        <td><span t-esc="line.amount"-->
+<!--                                  t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>-->
+<!--                        <td><span t-esc="line.total"-->
+<!--                                  t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>-->
+<!--                    </t>-->
+<!--                </tr>-->
+<!--            </tbody>-->
+<!--        </xpath>-->
+<!--        &lt;!&ndash;        Esta parte es un force grande pero que se puede hacer&ndash;&gt;-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]" position="attributes">-->
+<!--            <attribute name="class">table-borderless</attribute>-->
+<!--            <attribute name="style">position:relative;width:100%;border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[1]/td[1]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[1]/td[3]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[2]/td[1]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[3]/td[1]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[3]/td[3]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[4]/td[1]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[4]/td[3]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[5]/td[1]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[5]/td[3]" position="attributes">-->
+<!--            <attribute name="style">border:hidden;</attribute>-->
+<!--        </xpath>-->
+<!--        &lt;!&ndash;        Un salto de linea&ndash;&gt;-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]" position="after">-->
+<!--            <br/>-->
+<!--        </xpath>-->
+<!--        &lt;!&ndash;        Campos agregados a la tabla con las descripciones&ndash;&gt;-->
+<!--        <xpath expr="//div[hasclass('page')]/table[1]/tr[3]" position="after">-->
+<!--            <tr>-->
+<!--                <td style="border:hidden;"><strong>Tipo Pago</strong></td>-->
+<!--                <td><span t-esc="dict(o.contract_id._fields['schedule_pay'].selection).get(o.contract_id.schedule_pay) or ''"/></td>-->
+<!--                <td style="border:hidden;"><strong>Departamento</strong></td>-->
+<!--                <td><span t-esc="o.contract_id.department_id.name"/></td>-->
+<!--            </tr>-->
+<!--        </xpath>-->
+<!--        &lt;!&ndash;        Titulo&ndash;&gt;-->
+<!--        <xpath expr="//div[hasclass('page')]/h2[1]" position="replace">-->
+<!--            <hr style="border:0; height:2px; background:#333; background-image:linear-gradient(to right, #ccc, #333, #ccc);"/>-->
+<!--            <h3 style="position:relative; text-align:center;">COMPROBANTE DE PAGO NOMINA</h3>-->
+<!--        </xpath>-->
+<!--        &lt;!&ndash;        Titulo para la tabla con las horas del empleado y Tabla&ndash;&gt;-->
+<!--        <xpath expr="//table[2]" position="after">-->
+<!--            <t t-if="dict(o.contract_id._fields['schedule_pay'].selection).get(o.contract_id.schedule_pay) == 'Por hora'">-->
+<!--                <table class="hours_title" style="position:relative; font-size:175%; text-align:center; margin-top:15px; width:100%; border:hidden; ">-->
+<!--                    <td style="background-color:#a3a3a3; color:black;">DISTRIBUCION DE SUELDO</td>-->
+<!--                </table>-->
+<!--                &lt;!&ndash;            Tabla con fecha y horas trabajadas de forma descrita&ndash;&gt;-->
+<!--                <table class="table table-sm" style="font-size:115%;">-->
+<!--                    <thead>-->
+<!--                        <tr>-->
+<!--                            <th>Fecha</th>-->
+<!--                            <th>Horas Normales</th>-->
+<!--                            <th>Horas Extras</th>-->
+<!--                            <th>Horas Dias Feriados</th>-->
+<!--                        </tr>-->
+<!--                    </thead>-->
+<!--                    <tbody>-->
+<!--                        <tr t-foreach="o.env['working.hours.import'].search([('employee_id', '=', o.employee_id.id), ('date_from', '&gt;=', o.date_from), ('date_to', '&lt;=', o.date_to)], order='date_to')"-->
+<!--                            t-as="line">-->
+<!--                            <td><span t-field="line.date_to"/></td>-->
+<!--                            <td><span t-field="line.hours_amount"/></td>-->
+<!--                            <td><span t-field="line.extra_hours_amount"/></td>-->
+<!--                            <td><span t-field="line.holiday_hours_amount"/></td>-->
+<!--                        </tr>-->
+<!--                    </tbody>-->
+<!--                </table>-->
+<!--                &lt;!&ndash;            Variables&ndash;&gt;-->
+<!--                &lt;!&ndash;            Horas Normales&ndash;&gt;-->
+<!--                <t t-set="nh" t-value="0.00"/>-->
+<!--                &lt;!&ndash;            Horas Extras&ndash;&gt;-->
+<!--                <t t-set="eh" t-value="0.00"/>-->
+<!--                &lt;!&ndash;            Horas Dias Feriados&ndash;&gt;-->
+<!--                <t t-set="hdh" t-value="0.00"/>-->
+<!--                &lt;!&ndash;            Total a cobrar&ndash;&gt;-->
+<!--                <t t-set="t_collect" t-value="0.00"/>-->
+<!--                <t t-set="n_hours_payment" t-value="o.contract_id.wage"/>-->
+<!--                <t t-set="e_hours_payment" t-value="o.contract_id.wage_extra_hour"/>-->
+<!--                <t t-set="hd_hours_payment" t-value="o.contract_id.wage_holidays_hour"/>-->
+<!--                &lt;!&ndash;            Tabla con la suma de todas las horas&ndash;&gt;-->
+<!--                <table style="border:hidden; position:relative; width:100%; font-size:120%;">-->
+<!--                    <tr t-foreach="o.env['working.hours.import'].search([('employee_id', '=', o.employee_id.id), ('date_from', '&gt;=', o.date_from), ('date_to', '&lt;=', o.date_to)], order='date_to')"-->
+<!--                        t-as="i">-->
+<!--                        <t t-if="i.hours_amount, '&gt;',0 ">-->
+<!--                            <t t-set="nh" t-value="nh + i.hours_amount"/>-->
+<!--                        </t>-->
+<!--                        <t t-if="i.extra_hours_amount, '&gt;',0 " >-->
+<!--                            <t t-set="eh" t-value="eh + i.extra_hours_amount"/>-->
+<!--                        </t>-->
+<!--                        <t t-if="i.holiday_hours_amount, '&gt;',0 " >-->
+<!--                            <t t-set="hdh" t-value="hdh + i.holiday_hours_amount"/>-->
+<!--                        </t>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td style="text-align:center; border:hidden;" colspan="2"><strong>Sumatoria de Horas</strong></td>-->
+<!--                        <td style="text-align:center; border:hidden;" colspan="2"><strong>Precio horas </strong></td>-->
+<!--                        <td style="text-align:right; border:hidden;"><strong>Total</strong></td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td><strong>Horas Normales: </strong></td>-->
+<!--                        <td style="border:hidden; text-align:right; padding:0 1rem 0 0;" ><span t-esc="round(nh,2)"/></td>-->
+<!--                        <td><strong>Precio H/ Regulares: </strong></td>-->
+<!--                        <td style="border:hidden; text-align:right;"><span>RD$ </span><span t-esc="n_hours_payment"></span></td>-->
+<!--                        <td style="border:hidden; text-align:right;"><span>RD$ </span><span t-esc="round(nh*n_hours_payment,2)"/></td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td><strong>Horas Extras: </strong></td>-->
+<!--                        <td style="border:hidden; text-align:right; padding:0 1rem 0 0;" ><span t-esc="round(eh,2)"/></td>-->
+<!--                        <td><strong>Precio Horas Extras</strong></td>-->
+<!--                        <td style="border:hidden; text-align:right;"><span>RD$ </span><span t-esc="e_hours_payment"/></td>-->
+<!--                        <td style="border:hidden; text-align:right;"><span>RD$ </span><span t-esc="round(eh * e_hours_payment,2)"/></td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td><strong>Horas Feriadas: </strong></td>-->
+<!--                        <td style="border:hidden; text-align:right; padding:0 1rem 0 0;" ><span t-esc="round(hdh,2)"/></td>-->
+<!--                        <td><strong>Precio Horas feriadas: </strong></td>-->
+<!--                        <td style="border:hidden; text-align:right;"><span>RD$ </span><span t-esc="hd_hours_payment"/></td>-->
+<!--                        <td style="border:hidden; text-align:right;"><span>RD$ </span><span t-esc="round(hdh * hd_hours_payment,2)"/></td>-->
+<!--                    </tr>-->
+<!--                    <t t-set="t_collect" t-value="n_hours_payment * nh + e_hours_payment * eh + hd_hours_payment * hdh"/>-->
+<!--                </table>-->
+<!--            </t>-->
+<!--            <t t-else="">-->
+<!--                <br/>-->
+<!--            </t>-->
+<!--            <table style="border:hidden; position:relative; font-size:150%; text-align:center; width:100%;">-->
+<!--                    <td style="background-color:#a7c98f;">TOTAL A COBRAR RD$</td>-->
+<!--                    <tr t-foreach="o.line_ids"-->
+<!--                        t-as="i">-->
+<!--                        <t t-if="i.code == 'NET'">-->
+<!--                            <td style="border:hidden; text-align:right;"><span t-esc="i.total"/></td>-->
+<!--                        </t>-->
+<!--                    </tr>-->
+<!--                </table>-->
+<!--        </xpath>-->
+<!--        &lt;!&ndash;        Replace Firma autorizada&ndash;&gt;-->
+<!--        <xpath expr="//p[2]" position="replace">-->
+<!--            <p> </p>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[@class='page']" position="inside">-->
+<!--            <footer style="vertical-align: text-sub;">-->
+<!--                &lt;!&ndash;            Lineas de firma&ndash;&gt;-->
+<!--                <div class="text-muted">-->
+<!--                    <style>-->
+<!--                        table.recibido {position:relative; bottom: 0; top:55px; margin-top:15px;width:100% !important;border:0px-->
+<!--                        !important; border-spacing: 10px !important; border-collapse: separate !important;}-->
+<!--                        table.recibido td {border:0px !important;border-top:2px solid black !important; background:none-->
+<!--                        !important; text-align:center !important; width:30% !important;}-->
+<!--                    </style>-->
+<!--                    <table class="recibido"-->
+<!--                           border="0"-->
+<!--                           cellspacing="45">-->
+<!--                        <tr>-->
+<!--                            <td>Entregado por</td>-->
+<!--                            <td>Firma Empleado</td>-->
+<!--                        </tr>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </footer>-->
+<!--        </xpath>-->
+<!--    </template>-->
+</odoo>

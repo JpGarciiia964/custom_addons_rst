@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Form View to Modify it -->
+    <record id="view_hr_payslip_form_inherited" model="ir.ui.view">
+        <field name="name">view.hr.payslip.form.inherited</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_mail_send" type="object" class="oe_highlight" string="Enviar Recibo"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                <!-- Add your fields or attributes here -->
+                <field name="last_payslip_vacation" invisible="1"/>
+                <field name="pay_vacation" attrs="{'invisible':[('last_payslip_vacation','=',True)]}"/>
+                <field name="vacation_type" attrs="{'invisible':[('pay_vacation','=',False)],
+                                                    'required':[('pay_vacation','=',True)]}" />
+                <field name="partial_worked_days"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="hr_payslip_tree_inherit" model="ir.ui.view">
+        <field name="name">hr.payslip.tree.inherit</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//tree//field[@name='date_from']" position="before">
+                <field name="real_worked_hours" string="Horas trabajadas"/>
+                <field name="total_to_pay" string="Total a Pagar"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

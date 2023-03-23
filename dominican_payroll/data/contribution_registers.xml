@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+<!--        <record id="contribution_register_tss" model="hr.contribution.register">-->
+<!--            <field name="name">TSS</field>-->
+<!--            <field name="partner_id" ref="dominican_payroll.tss"/>-->
+<!--        </record>-->
+
+<!--        <record id="contribution_register_infotep" model="hr.contribution.register">-->
+<!--            <field name="name">INFOTEP</field>-->
+<!--            <field name="partner_id" ref="dominican_payroll.infotep"/>-->
+
+<!--        </record><record id="contribution_register_dgii" model="hr.contribution.register">-->
+<!--            <field name="name">DGII</field>-->
+<!--            <field name="partner_id" ref="dominican_payroll.dgii"/>-->
+<!--        </record>-->
+
+    </data>
+</odoo>

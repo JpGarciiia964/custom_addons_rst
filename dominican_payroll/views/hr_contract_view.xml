@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Form View to Modify it -->
+    <record id="hr_payroll_account_contract_form_view_inherited" model="ir.ui.view">
+        <field name="name">hr.payroll.account.contract.form.view.inherited</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_payroll_account.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//page[@name='other']//group[last()]" position="after">
+                <!-- Add your fields or attributes here -->
+                <group name="social_security" string="Seguridad social">
+                    <field name="codependants" required="1"/>
+                </group>
+                <group name="assurance" string="Seguro complementario">
+                    <field name="assurance_amount"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//field[@name='structure_type_id']" position="after">
+                <field name="deduction_plan" invisible="1"/> <!--Todo hacer visible cuando se termine proceso descuento mensual-->
+                <field name="deduction_quarter" attrs="{'invisible':[('deduction_plan','=',False)],
+                                                        'required':[('deduction_plan','=',True)]}"/>
+            </xpath>
+
+            <xpath expr="//div[@name='wage']" position="after">
+                <label for="wage_extra_hour"/>
+                <div class="o_row" name="wage_extra_hour">
+                    <field name="wage_extra_hour" nolabel="1"/>
+                </div>
+                <label for="wage_holidays_hour"/>
+                <div class="o_row" name="wage_holidays_hour">
+                    <field name="wage_holidays_hour" nolabel="1"/>
+                </div>
+                <label for="fixed_loan"/>
+                <div class="o_row" name="fixed_loan">
+                    <field name="fixed_loan" nolabel="1"/>
+                </div>
+                <label for="amount_saved"/>
+                <div class="o_row" name="amount_saved">
+                    <field name="amount_saved" nolabel="1"/>
+                </div>
+                <label for="comission_rate"/>
+                <div class="o_row" name="comission_rate">
+                    <field name="comission_rate" nolabel="1"/>
+                    <span>%</span>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

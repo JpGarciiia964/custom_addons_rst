@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="ministry_of_labour_report_wizard_form_view" model="ir.ui.view">
+            <field name="name">ministry_of_labour_report_wizard_form_view</field>
+            <field name="model">ministry.of.labour.report.wizard</field>
+            <field name="mode">primary</field>
+            <field name="arch" type="xml">
+                <form string="ministry_of_labour_report_wizard_form_view">
+                    <header>
+                        <button string="Generar Reporte" name="generate_report" type="object" class="btn-primary"/>
+                    </header>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company" options="{'no_create': True, 'no_open': True}"/>
+                        <label for="date_from" string="Período"/>
+                        <div>
+                            <field name="date_from" class="oe_inline"/> - <field name="date_to" class="oe_inline"/>
+                        </div>
+                        <field name="template"/>
+                        <separator colspan="2" string="Archivo XLS"/>
+                        <field name="ministry_of_labour_report_xlsx_binary" filename="ministry_of_labour_report_xlsx_file_name" readonly="1"/>
+                    </group>
+                    <footer>
+                        <button string="Cerrar" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_ministry_of_labour_report_wizard" model="ir.actions.act_window">
+            <field name="name">Reporte de Ministerio de Trabajo</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ministry.of.labour.report.wizard</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ministry_of_labour_report_wizard_form_view"/>
+        </record>
+
+        <menuitem id="ministry_of_labour_report_wizard_menu" name="Reporte de Ministerio de Trabajo"
+                  action="action_ministry_of_labour_report_wizard" parent="hr_payroll.menu_hr_payroll_report"
+                  groups="hr_payroll.group_hr_payroll_manager"
+                  sequence="16" />
+    </data>
+</odoo>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="assets_editor_popup"
+              inherit_id="website.assets_editor">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/odoo-powr-popup/static/src/js/snippets_menu.js"/>
+        </xpath>
+    </template>
+
+    <template id="snippets_powr_plugins_popup" inherit_id="odoo-powr-plugins.snippets_powr_plugins">
+        <xpath expr="//div[@id='powr_snippet_content']//div[hasclass('o_panel_body')]" position="inside">
+            <t t-snippet="odoo-powr-popup.popup"
+               t-thumbnail="/odoo-powr-popup/static/src/img/popup.svg"/>
+        </xpath>
+    </template>
+
+    <template id="popup" name="Popup">
+        <section class="popup" style="padding:10px;padding-top:20px;position:relative;">
+            <span class="edit_powr_snippet" style="display:none;">Click Here to Edit Block</span>
+            <style>
+                .popup_menu,.popup_menu:hover{
+                width: 100%;
+                margin-left: 10px;
+                color: white;
+                text-decoration: none;
+                float:left;
+                }
+                .o_editable .edit_powr_snippet{
+                display:block !important;
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                cursor:pointer;
+                z-index: -1;
+                background: white;
+                color: gainsboro;
+                }
+            </style>
+            <div class="container">
+            </div>
+        </section>
+    </template>
+
+
+    <template id="snippets_powr_plugins_popup_menu_options" inherit_id="website.snippet_options"
+              name="Options">
+        <xpath expr="//div" position="after">
+            <div data-js="snippets_powr_plugins_popup_menu_options" data-selector=".popup"
+                 data-snippet-option-id="snippets_powr_plugins_popup_menu_options">
+                <li>
+                    <a href="https://www.powr.io/plugins/popup/standalone?unique_label=UNIQUE_ID" target="_blank"
+                       class="popup_menu edit_popup">Edit Popup
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.powr.io" class="popup_menu" target="_blank">POWr Home</a>
+                </li>
+                <li>
+                    <a href="https://www.powr.io/knowledge-base" class="popup_menu" target="_blank">POWr Help</a>
+                </li>
+            </div>
+        </xpath>
+    </template>
+</odoo>

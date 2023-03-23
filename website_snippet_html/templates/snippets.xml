@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2019 Adgensee - Vincent Garcies
+     License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html). -->
+
+<odoo>
+
+    <template id="s_html" name="Html">
+        <section class="oe_snippet_body s_html"><p>Insert your custom code in Options.</p></section>
+    </template>
+
+    <template id="snippets" inherit_id="website.snippets">
+        <xpath expr="//div[@id='snippet_structure']/div[hasclass('o_panel_body')]">
+            <t t-snippet="website_snippet_html.s_html"
+               t-thumbnail="/website_snippet_html/static/src/img/s_html.png"/>
+        </xpath>
+    </template>
+
+    <template id="snippet_options" name="Edit Custom Html" inherit_id="website.snippets">
+        <xpath expr="//div[@id='snippet_options']" position="inside">
+            <div data-js="snippet_html" data-selector=".s_html">
+                <a tabindex="-1" href="#" class="dropdown-item" data-html_ask="" data-no-preview="true" title="Edit HTML"><i class="fa fa-code"/>Edit Html</a>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

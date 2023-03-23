@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="confirm_order_line_action_order" model="ir.actions.server">
+            <field name="name">Confirm Draft Payslips</field>
+            <field name="model_id" ref="model_hr_payslip"/>
+            <field name="binding_model_id" ref="model_hr_payslip"/>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    records.action_payslip_done()
+            </field>
+        </record>
+
+        <record id="view_hr_payslip_form_inherit_uae_payroll" model="ir.ui.view">
+            <field name="name">hr.payslip.form.inherit</field>
+            <field name="model">hr.payslip</field>
+            <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+            <field name="arch" type="xml">
+               <xpath expr="/form/header/button[@name='refund_sheet']" position="after">
+                    <button name="%(payslip_payment.hr_payslip_sheet_register_payment_wizard_action)d" states="done" type="action" string="Register Payment" class="oe_highlight o_expense_sheet_pay" context="{'default_amount': total_amount}" groups="account.group_account_manager"/>
+               </xpath>
+               <xpath expr="/form/header/field[@name='state']" position="replace">
+                   <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done,paid"/>
+                   <field name="total_amount" invisible="1"/>
+               </xpath>
+                <sheet position="after">
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </sheet>
+            </field>
+        </record>
+
+        <record id="hr_payslip_run_form_inherit" model="ir.ui.view">
+            <field name="name">hr.payslip.run.form.inherit</field>
+            <field name="model">hr.payslip.run</field>
+            <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/header/button[@name='close_payslip_run']" position="after">
+                        <button name="%(payslip_payment.hr_payslip_batchwise_sheet_register_payment_wizard_action)d" states="done" type="action" string="Register Payment" class="oe_highlight o_expense_sheet_pay" context="{'default_batch_id': active_id}" groups="account.group_account_manager"/>
+                        <button name="batch_wise_payslip_confirm" states="draft" type="object" string="Confirm Payslips" class="oe_highlight o_expense_sheet_pay" groups="account.group_account_manager"/>
+                </xpath>
+                <xpath expr="/form/header/button[@name='close_payslip_run']" position="replace">
+                  <button name="close_payslip_run" type="object" string="Close" states="paid" class="oe_highlight"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

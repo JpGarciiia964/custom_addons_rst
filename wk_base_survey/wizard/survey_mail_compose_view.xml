@@ -1,0 +1,22 @@
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="employee_survey_email_compose_message">
+            <field name="name">survey.mail.compose.message.form</field>
+            <field name="model">survey.mail.compose.message</field>
+            <field name="inherit_id" ref="survey.survey_email_compose_message"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='public']" position="after">
+                    <field name="email_from" invisible="1"/>
+                    <field name="send_to" widget="radio" invisible="context.get('survey_resent_token')" attrs="{'invisible': [('public','=','public_link')]}" />
+                </xpath>
+                <xpath expr="//field[@name='partner_ids']" position="attributes">
+                    <attribute name="attrs">{'invisible':[('send_to','!=','specific')]}</attribute>
+                </xpath>
+                <xpath expr="//field[@name='multi_email']" position="attributes">
+                    <attribute name="attrs">{'invisible':[('send_to','!=','specific')]}</attribute>
+                </xpath>
+            </field>
+        </record>
+                
+    </data>
+</odoo>

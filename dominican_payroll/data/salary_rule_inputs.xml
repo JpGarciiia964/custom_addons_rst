@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!--Comisiones-->
+        <record id="commissions_input" model="hr.payslip.input.type">
+            <field name="name">Comisiones</field>
+            <field name="code">COMIVE</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Horas Extras al 15%-->
+        <record id="he15_input" model="hr.payslip.input.type">
+            <field name="name">Horas Extras al 15%</field>
+            <field name="code">HE15</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Horas Extras al 35%-->
+        <record id="he35_input" model="hr.payslip.input.type">
+            <field name="name">Horas Extras al 35%</field>
+            <field name="code">HE35</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Horas Extras al 50%-->
+        <record id="he50_input" model="hr.payslip.input.type">
+            <field name="name">Horas Extras al 50%</field>
+            <field name="code">HE50</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Horas Extras al 100%-->
+        <record id="he100_input" model="hr.payslip.input.type">
+            <field name="name">Horas Extras al 100%</field>
+            <field name="code">HE100</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Incentivos-->
+        <record id="incentives_input" model="hr.payslip.input.type">
+            <field name="name">Incentivos</field>
+            <field name="code">INCEN</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Días de vacaciones-->
+        <record id="vacations_input" model="hr.payslip.input.type">
+            <field name="name">Vacaciones</field>
+            <field name="code">VACA</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Cafetería-->
+        <record id="cafeteria_input" model="hr.payslip.input.type">
+            <field name="name">Cafetería</field>
+            <field name="code">CAFE</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Farmacia-->
+        <record id="farmacia_input" model="hr.payslip.input.type">
+            <field name="name">Farmacia</field>
+            <field name="code">FARMA</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Ahorro-->
+        <record id="ahorro_input" model="hr.payslip.input.type">
+            <field name="name">Ahorro</field>
+            <field name="code">AHORRO</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Restaurante-->
+        <record id="restaurant_input" model="hr.payslip.input.type">
+            <field name="name">Restaurante</field>
+            <field name="code">REST</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Seguro médico-->
+        <record id="medical_assurance_input" model="hr.payslip.input.type">
+            <field name="name">Seguro médico</field>
+            <field name="code">SEGMED</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Avances a sueldo-->
+        <record id="salary_advance_input" model="hr.payslip.input.type">
+            <field name="name">Avances a sueldo</field>
+            <field name="code">AVAN</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Financiera-->
+        <record id="financial_input" model="hr.payslip.input.type">
+            <field name="name">Financiera</field>
+            <field name="code">FINAN</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Otros descuentos-->
+        <record id="other_deductions_input" model="hr.payslip.input.type">
+            <field name="name">Otros descuentos</field>
+            <field name="code">OTDESC</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Aportes adicionales SFS-->
+        <record id="additional_contribution_sfs_input" model="hr.payslip.input.type">
+            <field name="name">Aportes adicionales SFS</field>
+            <field name="code">APORSFS</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Aportes adicionales AFP-->
+        <record id="additional_contribution_afp_input" model="hr.payslip.input.type">
+            <field name="name">Aportes adicionales AFP</field>
+            <field name="code">APORAFP</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                            ]
+                                          )]"/>
+        </record>
+
+        <!--Sueldo a favor ISR-->
+        <record id="isr_positive_balance_input" model="hr.payslip.input.type">
+            <field name="name">Saldo a favor ISR</field>
+            <field name="code">SFISR</field>
+            <field name="struct_ids" eval="[(6, 0,
+                                            [
+                                                ref('dominican_payroll.structure_permanent_employees'),
+                                                ref('dominican_payroll.structure_foreign_employees')
+                                            ]
+                                          )]"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Form View to Modify it -->
+    <record id="dominican_payroll_view_account_payment_form_inherited" model="ir.ui.view">
+        <field name="name">dominican.payroll.view.account.payment.form.inherited</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            
+            <xpath expr="//field[@name='payment_date']" position="after">
+                <field name="commissioned" readonly="0"
+                        attrs="{'invisible': [('payment_type', '!=', 'inbound')]}"/>
+                <field name="user_id" readonly="1"
+                       attrs="{'invisible': [('payment_type', '!=', 'inbound')]}"/>
+            </xpath>
+            
+        </field>
+    </record>
+</odoo>

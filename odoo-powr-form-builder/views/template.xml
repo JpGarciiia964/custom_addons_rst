@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="assets_editor_form_builder"
+              inherit_id="website.assets_editor">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/odoo-powr-form-builder/static/src/js/snippets_menu.js"/>
+        </xpath>
+    </template>
+
+    <template id="snippets_powr_plugins_form_builder" inherit_id="odoo-powr-plugins.snippets_powr_plugins">
+        <xpath expr="//div[@id='powr_snippet_content']//div[hasclass('o_panel_body')]" position="inside">
+            <t t-snippet="odoo-powr-form-builder.form_builder"
+               t-thumbnail="/odoo-powr-form-builder/static/src/img/formBuilder.svg"/>
+        </xpath>
+    </template>
+
+    <template id="form_builder" name="Form Builder">
+        <section class="form_builder" style="padding:10px;padding-top:20px;position:relative;">
+            <span class="edit_powr_snippet" style="display:none;">Click Here to Edit Block</span>
+            <style>
+                .form_builder_menu,.form_builder_menu:hover{
+                width: 100%;
+                margin-left: 10px;
+                color: white;
+                text-decoration: none;
+                float:left;
+                }
+                .o_editable .edit_powr_snippet{
+                display:block !important;
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                cursor:pointer;
+                z-index: -1;
+                background: white;
+                color: gainsboro;
+                }
+            </style>
+            <div class="container">
+            </div>
+        </section>
+    </template>
+
+
+    <template id="snippets_powr_plugins_form_builder_menu_options" inherit_id="website.snippet_options"
+              name="Options">
+        <xpath expr="//div" position="after">
+            <div data-js="snippets_powr_plugins_form_builder_menu_options" data-selector=".form_builder"
+                 data-snippet-option-id="snippets_powr_plugins_form_builder_menu_options">
+                <li>
+                    <a href="https://www.powr.io/plugins/form-builder/standalone?unique_label=UNIQUE_ID" target="_blank"
+                       class="form_builder_menu edit_formbuilder">Edit Form Builder
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.powr.io" class="form_builder_menu" target="_blank">POWr Home</a>
+                </li>
+                <li>
+                    <a href="https://www.powr.io/knowledge-base" class="form_builder_menu" target="_blank">POWr Help</a>
+                </li>
+            </div>
+        </xpath>
+    </template>
+</odoo>

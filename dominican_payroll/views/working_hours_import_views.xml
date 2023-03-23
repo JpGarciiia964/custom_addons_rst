@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="working_hours_import_action" model="ir.actions.act_window">
+        <field name="name">Importación horas de trabajo</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">working.hours.import</field>
+        <field name="view_mode">tree</field>
+    </record>
+    <menuitem
+            id="working_hours_import_menu"
+            name="Importación de horas trabajadas"
+            action="working_hours_import_action"
+            groups="hr_payroll.group_hr_payroll_manager"
+            parent="hr_payroll.menu_hr_salary_configuration"
+            sequence="1"/>
+
+    <!--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx-->
+    <record id="working_hours_import_view_tree" model="ir.ui.view">
+        <field name="name"> Lista horas trabajadas importadas</field>
+        <field name="model">working.hours.import</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="employee_id"/>
+<!--                <field name="employee_code"/>-->
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="hours_amount"/>
+                <!--<field name="hours_code"/>-->
+                <field name="extra_hours_amount"/>
+                <field name="holiday_hours_amount"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="working_hours_import_search_view" model="ir.ui.view">
+        <field name="name">Vista search horas trabajadas</field>
+        <field name="model">working.hours.import</field>
+        <field name="arch" type="xml">
+            <search string="">
+                <field name="name" filter_domain="[('name', 'ilike', self)]"/>
+                <group expand="1" string="Agrupar por...">
+                    <filter string="Empleado" name="employee_id"
+                            domain="[]" context="{'group_by':'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

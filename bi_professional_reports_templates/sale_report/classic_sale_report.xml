@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <report 
+            id="sale.action_report_saleorder"
+            string="Quotation / Order"
+            model="sale.order" 
+            report_type="qweb-pdf"
+            file="bi_professional_reports_templates.custom_report_saleorder" 
+            name="bi_professional_reports_templates.custom_report_saleorder" 
+        />
+    </data>
+</odoo>
